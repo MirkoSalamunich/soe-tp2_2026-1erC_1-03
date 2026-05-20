@@ -1,0 +1,8 @@
+**/Debug/
+**/Release/
+**/.settings/
+**/.pdm/
+*.o
+*.elf
+*.list
+*.map
