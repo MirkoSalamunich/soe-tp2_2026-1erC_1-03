@@ -100,10 +100,10 @@ void task_led(void *parameters)
 
 void task_led_statechart(void)
 {
-	// se verifica si alguien levantó el semáforo. Con tiempo de espera 0 (no bloqueante).
-	if (xSemaphoreTake(h_sem_led_event, 0) == pdTRUE) // Si pdTRUE, significa que el botón envió un evento.
+	// Checks if someone raised the semaphore. Waiting time == 0 (non-blocking).
+	if (xSemaphoreTake(h_sem_led_event, 0) == pdTRUE)
 	{
-		task_led_dta.flag = true; // Se encendiende el flag interno
+		task_led_dta.flag = true;
 	}
 
 	switch (task_led_dta.state)
