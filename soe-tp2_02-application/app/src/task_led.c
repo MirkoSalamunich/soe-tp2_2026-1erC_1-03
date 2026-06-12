@@ -65,7 +65,7 @@ void task_led_statechart();
 /********************** internal data definition *****************************/
 
 /********************** external data declaration ****************************/
-extern QueueHandle_t h_queue_led_event; // agrego la cola creada en app.c
+extern QueueHandle_t h_button_queue;
 
 /********************** external functions definition ************************/
 /* Task LED thread */
@@ -99,15 +99,14 @@ void task_led(void *parameters)
 
 void task_led_statechart(void)
 {
-	uint32_t ev; // variable temporal para recibir el evento
-
-	// xQueueReceive saca un elemento de la cola. Si devuelve pdTRUE, significa que había un evento.
-	// se usa 0 como tiempo de espera (no bloqueante) para no alterar la periodicidad de 50ms.
-	if (xQueueReceive(h_queue_led_event, &ev, 0) == pdTRUE)
-	{
-		task_led_dta.event = (task_led_ev_t)ev;
-		task_led_dta.flag = true;
-	}
+	uint8_t recived_event;
+    if (xQueueReceive(h_button_queue, &recived_event, 0) == pdTRUE)
+    {
+    	/* If it was possible to remove an item from the queue, it means the button
+    	was pressed. The flag is set and the event is injected. */
+        task_led_dta.flag = true;
+        task_led_dta.event = EV_LED_XX_BLINK; 
+    }
 
 	switch (task_led_dta.state)
 	{
