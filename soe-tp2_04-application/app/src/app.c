@@ -89,15 +89,14 @@ void app_init(void)
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created */
+	h_sem_btn_event = xSemaphoreCreateBinary();
 
     /* Check the queue or semaphore (binary or counting) or mutex was created 
      * successfully. */
-
-    /* Add queue or semaphore (binary or counting) or mutex to registry. */
-	h_sem_btn_event = xSemaphoreCreateBinary();
 	configASSERT(h_sem_btn_event != NULL);
 
-	vQueueAddToRegistry(h_sem_btn_event, "Sem_Btn_Event"); // se agrega el semaforo al debugger
+    /* Add queue or semaphore (binary or counting) or mutex to registry. */
+	vQueueAddToRegistry(h_sem_btn_event, "Button Event Semaphore");
 
 	/* Add threads, ... */
     BaseType_t ret;
