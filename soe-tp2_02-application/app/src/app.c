@@ -63,7 +63,7 @@ uint32_t g_task_idle_cnt;
 uint32_t g_app_stack_overflow_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
-QueueHandle_t h_queue_led_event;
+QueueHandle_t h_button_queue = NULL;
 
 /* Declare a variable of type xSemaphoreHandle (binary or counting) or mutex. 
  * This is used to reference the semaphore that is used to synchronize a thread
@@ -89,15 +89,14 @@ void app_init(void)
 
     /* Before a queue or semaphore (binary or counting) or mutex is used it must 
      * be explicitly created */
+    h_button_queue = xQueueCreate(5, sizeof(uint8_t));
 
-	// Creamos una cola que puede guardar hasta 5 eventos del tipo task_led_ev_t
-	h_queue_led_event = xQueueCreate(5, sizeof(uint32_t)); // creacion cola
-	configASSERT(h_queue_led_event != NULL); // verificacion
     /* Check the queue or semaphore (binary or counting) or mutex was created 
      * successfully. */
+    configASSERT(h_button_queue != NULL)
 
     /* Add queue or semaphore (binary or counting) or mutex to registry. */
-
+    vQueueAddToRegistry(h_button_queue, "Button Queue");
 	/* Add threads, ... */
     BaseType_t ret;
 
