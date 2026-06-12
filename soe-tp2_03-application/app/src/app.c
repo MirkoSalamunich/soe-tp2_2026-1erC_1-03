@@ -43,10 +43,13 @@
 
 /* Application & Tasks includes. */
 #include "board.h"
-#include "app.h"
-#include "task_led_attribute.h"
+#include "task_btn.h"
+#include "task_led.h"
 
 /********************** macros and definitions *******************************/
+#define G_APP_TICK_CNT_INI				0ul
+#define G_TASK_IDLE_CNT_INI				0ul
+#define G_APP_STACK_OVERFLOW_CNT_INI	0ul
 
 /********************** internal data declaration ****************************/
 
@@ -55,14 +58,82 @@
 /********************** internal data definition *****************************/
 
 /********************** external data declaration ****************************/
-extern SemaphoreHandle_t h_sem_led_event;
+uint32_t g_app_tick_cnt;
+uint32_t g_task_idle_cnt;
+uint32_t g_app_stack_overflow_cnt;
+
+/* Declare a variable of type QueueHandle_t. This is used to reference queues*/
+
+/* Declare a variable of type xSemaphoreHandle (binary or counting) or mutex. 
+ * This is used to reference the semaphore that is used to synchronize a thread
+ * with other thread or to ensure mutual exclusive access to...*/
+SemaphoreHandle_t h_sem_led_event;
+
+/* Declare a variable of type TaskHandle_t. This is used to reference threads. */
+TaskHandle_t h_task_btn;
+TaskHandle_t h_task_led;
 
 /********************** external functions definition ************************/
-void put_event_task_led(task_led_ev_t event)
+void app_init(void)
 {
-	task_led_dta.event = event;
-	//task_led_dta.flag = true;
-	xSemaphoreGive(h_sem_led_event);
+	g_app_tick_cnt = G_APP_TICK_CNT_INI;
+	g_task_idle_cnt = G_TASK_IDLE_CNT_INI;
+	g_app_stack_overflow_cnt = G_APP_STACK_OVERFLOW_CNT_INI;
+
+	/* Print out: Application Initialized */
+	LOGGER_INFO(" ");
+	LOGGER_INFO("%s is running - Tick [mS] = %3d", GET_NAME(app_init), (int)xTaskGetTickCount());
+
+	LOGGER_INFO(" RTOS - Event-Triggered Systems (ETS)");
+	LOGGER_INFO(" soe-tp0_03-application: Demo Code");
+
+    /* Before a queue or semaphore (binary or counting) or mutex is used it must 
+     * be explicitly created */
+	h_sem_led_event = xSemaphoreCreateBinary();
+
+    /* Check the queue or semaphore (binary or counting) or mutex was created 
+     * successfully. */
+	configASSERT(h_sem_led_event != NULL);
+
+    /* Add queue or semaphore (binary or counting) or mutex to registry. */
+	vQueueAddToRegistry(h_sem_led_event, "Led Event Semaphore");
+
+	/* Add threads, ... */
+    BaseType_t ret;
+
+    /* Task BTN thread at priority 1 */
+    ret = xTaskCreate(task_btn,							/* Pointer to the function thats implement the task. */
+					  "Task BTN",						/* Text name for the task. This is to facilitate debugging only. */
+					  (2 * configMINIMAL_STACK_SIZE),	/* Stack depth in words. */
+					  NULL,								/* We are not using the task parameter. */
+					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
+					  &h_task_btn);						/* We are using a variable as task handle. */
+
+    /* Check the thread was created successfully. */
+    configASSERT(pdPASS == ret);
+
+    /* Task LED thread at priority 1 */
+    ret = xTaskCreate(task_led,							/* Pointer to the function thats implement the task. */
+					  "Task LED",						/* Text name for the task. This is to facilitate debugging only. */
+					  (2 * configMINIMAL_STACK_SIZE),	/* Stack depth in words. */
+					  NULL,								/* We are not using the task parameter. */
+					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
+					  &h_task_led);						/* We are using a variable as task handle. */
+
+    /* Check the thread was created successfully. */
+    configASSERT(pdPASS == ret);
+
+    /* Total amount of heap space that remains unallocated. Is also available
+     * with xFreeBytesRemaining variable for heap management schemes 2 to 5.
+     * Memory array used by heap_4 is specified as:
+     * uint8_t ucHeap[configTOTAL_HEAP_SIZE]; */
+    ret = xPortGetFreeHeapSize();
+
+    /* There is no dedicated list for task in Running mode (as we have only
+     * one task in this state at the moment), but the currently run task ID
+     * is stored in variable pxCurrentTCB */
+
+    cycle_counter_init();
 }
 
 /********************** end of file ******************************************/
