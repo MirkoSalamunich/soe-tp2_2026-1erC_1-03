@@ -85,9 +85,8 @@ void task_btn(void *parameters)
 	{
 		/* Print out: Task execution */
 		//LOGGER_INFO(" %s - Tick [mS] = %3d", pcTaskGetName(NULL), (int)xTaskGetTickCount());
-		TickType_t wait_time = (task_btn_dta.state == ST_BTN_XX_UP) ? portMAX_DELAY : BTN_TICK_DEL_MAX;
 
-		/* se bloquea la tarea del semaforo en vez de usar vTaskDelay */
+		TickType_t wait_time = (task_btn_dta.state == ST_BTN_XX_UP) ? portMAX_DELAY : BTN_TICK_DEL_MAX;
 		xSemaphoreTake(h_sem_btn_event, wait_time);
 
 		/* Run Task Statechart */
@@ -184,18 +183,13 @@ void task_btn_statechart(void)
 
 }
 
-/* Rutina de Servicio de Interrupción (ISR) provista por la HAL */
+/* Interruption Service Routine (ISR) */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	// Variable requerida por FreeRTOS para saber si debe cambiar de contexto
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if (GPIO_Pin == task_btn_dta.pin)
 	{
-		// La ISR da el semáforo para despertar a la tarea task_btn
 		xSemaphoreGiveFromISR(h_sem_btn_event, &xHigherPriorityTaskWoken);
-
-		// Forzamos un cambio de contexto inmediato si la tarea despertada
-		// tiene mayor prioridad que la tarea que fue interrumpida.
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
